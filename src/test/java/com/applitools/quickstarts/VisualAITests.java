@@ -1,5 +1,7 @@
 package com.applitools.quickstarts;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +17,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -29,26 +33,38 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import com.applitools.eyes.BatchInfo;
+import com.applitools.eyes.EyesRunner;
+import com.applitools.eyes.selenium.ClassicRunner;
+import com.applitools.eyes.selenium.Eyes;
+import com.applitools.eyes.selenium.fluent.Target;
+
 @RunWith(Enclosed.class)
-public class TraditionalTests {
+public class VisualAITests {
 
 	@RunWith(Parameterized.class)
 	public static class TheParameterizedPart {
 
+		private EyesRunner runner;
+		private Eyes eyes;
+		private static BatchInfo batch;
 		private WebDriver driver;
 		private String userName;
 		private String password;
+		private String testName;
 
-		public TheParameterizedPart(String userName, String password) {
+		public TheParameterizedPart(String userName, String password, String testName) {
 			this.userName = userName;
 			this.password = password;
+			this.testName = testName;
 		}
 
 		@Test
 		public void loginTest() throws Exception {
+			eyes.open(driver, "Hackathon App", testName);
 			// Navigate the browser to the "ACME" demo app.
-			driver.get("https://demo.applitools.com/hackathonV2.html");
-			System.out.println("UserName: " + userName + " , Password: " + password);
+			driver.get("https://demo.applitools.com/hackathon.html");
+			System.out.println("UserName: " + userName + " , Password: " + password + " , TestName: " + testName);
 			boolean userNameExist = !StringUtils.isBlank(userName);
 			boolean passwordExist = !StringUtils.isBlank(password);
 			if (userNameExist) {
@@ -67,26 +83,18 @@ public class TraditionalTests {
 				WebElement table = driver.findElement(By.id("transactionsTable"));
 				wait.until(ExpectedConditions.visibilityOf(table));
 			} else if (userNameExist && !passwordExist) {
-				// password must be present
-				try {
-					String errorTxt = driver
-							.findElement(By.xpath("//div[@role='alert' and @class='alert alert-warning']")).getText();
-					Assert.assertTrue("Login error text not matching", errorTxt.equals("Password must be present"));
-				} catch (Exception e) {
-					throw new Exception("Error message is missing");
-				}
+				// Visual checkpoint
+				eyes.checkWindow("UserName provided Window");
 			} else if (!userNameExist && passwordExist) {
-				// username must be present
-				String errorTxt = driver.findElement(By.xpath("//div[@role='alert' and @class='alert alert-warning']"))
-						.getText();
-				Assert.assertTrue("Login error text not matching", errorTxt.equals("Username must be present"));
+				// Visual checkpoint
+				eyes.checkWindow("Password provided Window");
 			} else {
-				// both username and password must be present
-				String errorTxt = driver.findElement(By.xpath("//div[@role='alert' and @class='alert alert-warning']"))
-						.getText();
-				Assert.assertTrue("Login error text not matching",
-						errorTxt.equals("Both Username and Password must be present"));
+				// Visual checkpoint
+				eyes.checkWindow("No UserName Password provided Window");
 			}
+			// eyes.check("loginTest", Target.window().ignoreDisplacements());
+			// End the test.
+			eyes.closeAsync();
 		}
 
 		@Parameterized.Parameters
@@ -96,8 +104,31 @@ public class TraditionalTests {
 			return testdataset;
 		}
 
+		@BeforeClass
+		public static void setBatch() {
+			// Must be before ALL tests (at Class-level)
+			batch = new BatchInfo("Login Batch");
+		}
+
 		@Before
 		public void beforeEach() {
+			// Initialize the Runner for your test.
+			runner = new ClassicRunner();
+
+			// Initialize the eyes SDK
+			eyes = new Eyes(runner);
+
+			// Raise an error if no API Key has been found.
+			if (isNullOrEmpty(System.getenv("APPLITOOLS_API_KEY"))) {
+				throw new RuntimeException("No API Key found; Please set environment variable 'APPLITOOLS_API_KEY'.");
+			}
+
+			// Set your personal Applitols API Key from your environment variables.
+			eyes.setApiKey(System.getenv("APPLITOOLS_API_KEY"));
+
+			System.out.println(System.getenv("APPLITOOLS_API_KEY"));
+			// set batch name
+			eyes.setBatch(batch);
 
 			// Use Chrome browser
 			driver = new ChromeDriver();
@@ -108,25 +139,43 @@ public class TraditionalTests {
 		public void afterEach() {
 			// Close the browser.
 			driver.quit();
+			// If the test was aborted before eyes.close was called, ends the test as
+			// aborted.
+			eyes.abortIfNotClosed();
+
 		}
 	}
 
 	public static class NotParameterizedPart {
+		private EyesRunner runner;
+		private Eyes eyes;
+		private static BatchInfo batch;
 		private WebDriver driver;
+
+		@BeforeClass
+		public static void setBatch() {
+			// Must be before ALL tests (at Class-level)
+			batch = new BatchInfo("Hackathon Batch");
+		}
 
 		@Test
 		public void DynamicContentTest() {
-			driver.get("https://demo.applitools.com/hackathonAppV2.html?showAd=true");
-
+			eyes.open(driver, "Hackathon App", "DynamicContentTest");
+			driver.get("https://demo.applitools.com/hackathonApp.html?showAd=true");
+			// Visual checkpoint - make sure nothing changes other than ads
+			eyes.checkWindow("DynamicContentTest Window");
 			List<WebElement> ad1 = driver.findElement(By.id("flashSale")).findElements(By.tagName("img"));
 			Assert.assertTrue("Dynamic ad1 is missing", ad1.size() == 1);
 			List<WebElement> ad2 = driver.findElement(By.id("flashSale2")).findElements(By.tagName("img"));
 			Assert.assertTrue("Dynamic ad2 is missing", ad2.size() == 1);
+			// End the test.
+			eyes.closeAsync();
 		}
 
 		@Test
 		public void CanvasChartTest() throws IOException, InterruptedException {
-			driver.get("https://demo.applitools.com/hackathonV2.html");
+			eyes.open(driver, "Hackathon App", "CanvasChartTest");
+			driver.get("https://demo.applitools.com/hackathon.html");
 
 			// login to application
 			WebElement userNameWE = driver.findElement(By.id("username"));
@@ -145,63 +194,24 @@ public class TraditionalTests {
 			WebElement canvasWE = driver.findElement(By.id("canvas"));
 			wait.until(ExpectedConditions.visibilityOf(canvasWE));
 
-			Thread.sleep(1000);
-
-			File screenshotLocation = new File(".\\HackathonCanvasScreenshot.png");
-			File screenshotLocationTemp = new File(".\\HackathonCanvasScreenshotTemp.png");
-			WebElement canvas = driver.findElement(By.id("canvas"));
-			// Get entire page screenshot
-			File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-			BufferedImage fullImg = ImageIO.read(screenshot);
-
-			// Get the location of element on the page
-			Point point = canvas.getLocation();
-
-			// Get width and height of the element
-			int canvasWidth = canvas.getSize().getWidth();
-			int canvasHeight = canvas.getSize().getHeight();
-
-			// Crop the entire page screenshot to get only element screenshot
-			BufferedImage canvasScreenshot = fullImg.getSubimage(point.getX(), point.getY(), canvasWidth, canvasHeight);
-			ImageIO.write(canvasScreenshot, "png", screenshot);
-
-			if (!screenshotLocation.exists()) {
-				// Copy the element screenshot to disk
-				FileUtils.copyFile(screenshot, screenshotLocation);
-				FileUtils.copyFile(screenshot, screenshotLocationTemp);
-			} else {
-				FileUtils.copyFile(screenshot, screenshotLocationTemp);
-				Assert.assertTrue("There is a change in canvas chart",
-						compareImage(screenshotLocation, screenshotLocationTemp));
-			}
+			// Visual checkpoint - taken screenshot of chart with 2017 and 2018
+			eyes.checkWindow("Canvas Chart Window");
 
 			// click show data for next year
 			driver.findElement(By.id("addDataset")).click();
-			Thread.sleep(1000);
-			File screenshotLocation2019 = new File(".\\HackathonCanvasScreenshot2019.png");
-			canvas = driver.findElement(By.id("canvas"));
-			// Get entire page screenshot
-			screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-			fullImg = ImageIO.read(screenshot);
+			// click show data for next year
+			eyes.checkWindow("Canvas Chart 2019 Window");
 
-			// Get the location of element on the page
-			point = canvas.getLocation();
-
-			// Get width and height of the element
-			canvasWidth = canvas.getSize().getWidth();
-			canvasHeight = canvas.getSize().getHeight();
-			canvasScreenshot = fullImg.getSubimage(point.getX(), point.getY(), canvasWidth, canvasHeight);
-			ImageIO.write(canvasScreenshot, "png", screenshot);
-			FileUtils.copyFile(screenshot, screenshotLocation2019);
-			Assert.assertFalse("There is no change in canvas chart after adding next year",
-					compareImage(screenshotLocationTemp, screenshotLocation2019));
+			// End the test.
+			eyes.closeAsync();
 		}
 
 		@Test
 		public void TableSortTest() {
 
+			eyes.open(driver, "Hackathon App", "TableSortTest");
 			// Navigate the browser to the "ACME" demo app.
-			driver.get("https://demo.applitools.com/hackathonV2.html");
+			driver.get("https://demo.applitools.com/hackathon.html");
 
 			// login to application
 			WebElement userNameWE = driver.findElement(By.id("username"));
@@ -214,6 +224,9 @@ public class TraditionalTests {
 			WebDriverWait wait = new WebDriverWait(driver, 10); // you can reuse this one
 			WebElement table = driver.findElement(By.id("transactionsTable"));
 			wait.until(ExpectedConditions.visibilityOf(table));
+
+			// Visual checkpoint - before sorting transaction data table
+			eyes.checkWindow("Transaction Data Window");
 
 			// save data from each row before sorting
 			HashMap<String, List<String>> transactionDataMap = new HashMap<String, List<String>>();
@@ -231,6 +244,9 @@ public class TraditionalTests {
 
 			// sort amount column
 			driver.findElement(By.id("amount")).click();
+
+			// Visual checkpoint - before sorting transaction data table after sort
+			eyes.checkWindow("Transaction Data Window Sorted");
 
 			// save data from each row after sorting
 			HashMap<String, List<String>> sortedTransactionDataMap = new HashMap<String, List<String>>();
@@ -262,82 +278,55 @@ public class TraditionalTests {
 				Assert.assertTrue("Amounts are not in Ascending order",
 						formattedSortedAmountsUI.get(i - 1).compareTo(formattedSortedAmountsUI.get(i)) < 0);
 			}
+
+			// End the test.
+			eyes.closeAsync();
 		}
 
 		@Test
 		public void loginUITest() throws Exception {
 
+			eyes.open(driver, "Hackathon App", "loginUITest");
+
 			// Navigate the browser to the "ACME" demo app.
-			driver.get("https://demo.applitools.com/hackathonV2.html");
+			driver.get("https://demo.applitools.com/hackathon.html");
 
-			// verify the elements on the login form
-			String headerText = driver.findElement(By.xpath("//h4")).getText();
-			Assert.assertTrue("Header text did not match", headerText.equals("Login Form"));
+			// Visual checkpoint #1 - Check the login page.
+			eyes.checkWindow("Login Window");
 
-			String usernameLabel = driver.findElement(By.xpath("//input[@id = 'username']/preceding-sibling::label"))
-					.getText();
-			Assert.assertTrue("Username did not match", usernameLabel.equals("Username"));
-
-			String passwordLabel = driver.findElement(By.xpath("//input[@id = 'password']/preceding-sibling::label"))
-					.getText();
-			Assert.assertTrue("Password did not match", passwordLabel.equals("Password"));
-
-			String signinLabel = driver.findElement(By.xpath("//button[@id='log-in']")).getText();
-			Assert.assertTrue("Log In button text did not match", signinLabel.equals("Log In"));
-
-			String remembermeLabel = driver.findElement(By.xpath("//label[@class = 'form-check-label']")).getText();
-			Assert.assertTrue("Remember Me did not match", remembermeLabel.equals("Remember Me"));
-
-			try {
-				WebElement userIcon = driver
-						.findElement(By.xpath("//div[@class = 'pre-icon os-icon os-icon-user-male-circle']"));
-				userIcon.isDisplayed();
-			} catch (Exception e) {
-				throw new Exception("user icon is missing");
-			}
-
-			try {
-				WebElement passwordIcon = driver
-						.findElement(By.xpath("//div[@class = 'pre-icon os-icon os-icon-fingerprint']"));
-				passwordIcon.isDisplayed();
-			} catch (Exception e) {
-				throw new Exception("password icon is missing");
-			}
-
-			try {
-				WebElement twitterIcon = driver.findElement(By.xpath("//img[@src='img/social-icons/twitter.png']"));
-				twitterIcon.isDisplayed();
-			} catch (Exception e) {
-				throw new Exception("twitter icon is missing");
-			}
-
-			try {
-				WebElement facebookIcon = driver.findElement(By.xpath("//img[@src='img/social-icons/facebook.png']"));
-				facebookIcon.isDisplayed();
-			} catch (Exception e) {
-				throw new Exception("facebook icon is missing");
-			}
-
-			try {
-				WebElement linkedinIcon = driver.findElement(By.xpath("//img[@src='img/social-icons/linkedin.png']"));
-				linkedinIcon.isDisplayed();
-			} catch (Exception e) {
-				throw new Exception("linkedin icon is missing");
-			}
-
-			WebElement logoIcon = driver.findElement(By.xpath("//img[@src='img/logo-big.png']"));
-			logoIcon.isDisplayed();
-
+			// End the test.
+			eyes.closeAsync();
 		}
 
 		@After
 		public void afterEach() {
 			// Close the browser.
 			driver.quit();
+			// If the test was aborted before eyes.close was called, ends the test as
+			// aborted.
+			eyes.abortIfNotClosed();
+
 		}
 
 		@Before
 		public void beforeEach() {
+			// Initialize the Runner for your test.
+			runner = new ClassicRunner();
+
+			// Initialize the eyes SDK
+			eyes = new Eyes(runner);
+
+			// Raise an error if no API Key has been found.
+			if (isNullOrEmpty(System.getenv("APPLITOOLS_API_KEY"))) {
+				throw new RuntimeException("No API Key found; Please set environment variable 'APPLITOOLS_API_KEY'.");
+			}
+
+			// Set your personal Applitols API Key from your environment variables.
+			eyes.setApiKey(System.getenv("APPLITOOLS_API_KEY"));
+
+			System.out.println(System.getenv("APPLITOOLS_API_KEY"));
+			// set batch name
+			eyes.setBatch(batch);
 
 			// Use Chrome browser
 			driver = new ChromeDriver();
