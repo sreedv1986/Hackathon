@@ -1,32 +1,21 @@
 package com.applitools.quickstarts;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-
-import javax.imageio.ImageIO;
-
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.experimental.runners.Enclosed;
 import org.openqa.selenium.By;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.Point;
-import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -37,7 +26,6 @@ import com.applitools.eyes.BatchInfo;
 import com.applitools.eyes.EyesRunner;
 import com.applitools.eyes.selenium.ClassicRunner;
 import com.applitools.eyes.selenium.Eyes;
-import com.applitools.eyes.selenium.fluent.Target;
 
 @RunWith(Enclosed.class)
 public class VisualAITests {
@@ -321,31 +309,6 @@ public class VisualAITests {
 			// Use Chrome browser
 			driver = new ChromeDriver();
 			driver.manage().window().maximize();
-		}
-
-		public static boolean compareImage(File fileA, File fileB) throws IOException {
-
-			// take buffer data from both image files //
-			BufferedImage imgA = ImageIO.read(fileA);
-			BufferedImage imgB = ImageIO.read(fileB);
-			// The images must be the same size.
-			if (imgA.getWidth() != imgB.getWidth() || imgA.getHeight() != imgB.getHeight()) {
-				return false;
-			}
-
-			int width = imgA.getWidth();
-			int height = imgA.getHeight();
-
-			// Loop over every pixel.
-			for (int y = 0; y < height; y++) {
-				for (int x = 0; x < width; x++) {
-					// Compare the pixels for equality.
-					if (imgA.getRGB(x, y) != imgB.getRGB(x, y)) {
-						return false;
-					}
-				}
-			}
-			return true;
 		}
 	}
 }
