@@ -47,11 +47,10 @@ public class TraditionalTests {
 			this.password = password;
 		}
 
-		
 		@Test
-		public void loginTest() {
+		public void loginTest() throws Exception {
 			// Navigate the browser to the "ACME" demo app.
-			driver.get("https://demo.applitools.com/hackathon.html");
+			driver.get("https://demo.applitools.com/hackathonV2.html");
 			System.out.println("UserName: " + userName + " , Password: " + password);
 			boolean userNameExist = !StringUtils.isBlank(userName);
 			boolean passwordExist = !StringUtils.isBlank(password);
@@ -72,9 +71,13 @@ public class TraditionalTests {
 				wait.until(ExpectedConditions.visibilityOf(table));
 			} else if (userNameExist && !passwordExist) {
 				// password must be present
-				String errorTxt = driver.findElement(By.xpath("//div[@role='alert' and @class='alert alert-warning']"))
-						.getText();
-				Assert.assertTrue("Login error text not matching", errorTxt.equals("Password must be present"));
+				try {
+					String errorTxt = driver
+							.findElement(By.xpath("//div[@role='alert' and @class='alert alert-warning']")).getText();
+					Assert.assertTrue("Login error text not matching", errorTxt.equals("Password must be present"));
+				} catch (Exception e) {
+					throw new Exception("Error message is missing");
+				}
 			} else if (!userNameExist && passwordExist) {
 				// username must be present
 				String errorTxt = driver.findElement(By.xpath("//div[@role='alert' and @class='alert alert-warning']"))
@@ -116,7 +119,7 @@ public class TraditionalTests {
 
 		@Test
 		public void DynamicContentTest() {
-			driver.get("https://demo.applitools.com/hackathonApp.html?showAd=true");
+			driver.get("https://demo.applitools.com/hackathonAppV2.html?showAd=true");
 
 			List<WebElement> ad1 = driver.findElement(By.id("flashSale")).findElements(By.tagName("img"));
 			Assert.assertTrue("Dynamic ad1 is missing", ad1.size() == 1);
@@ -124,10 +127,9 @@ public class TraditionalTests {
 			Assert.assertTrue("Dynamic ad2 is missing", ad2.size() == 1);
 		}
 
-		
 		@Test
 		public void CanvasChartTest() throws IOException, InterruptedException {
-			driver.get("https://demo.applitools.com/hackathon.html");
+			driver.get("https://demo.applitools.com/hackathonV2.html");
 
 			// login to application
 			WebElement userNameWE = driver.findElement(By.id("username"));
@@ -169,6 +171,7 @@ public class TraditionalTests {
 			if (!screenshotLocation.exists()) {
 				// Copy the element screenshot to disk
 				FileUtils.copyFile(screenshot, screenshotLocation);
+				FileUtils.copyFile(screenshot, screenshotLocationTemp);
 			} else {
 				FileUtils.copyFile(screenshot, screenshotLocationTemp);
 				Assert.assertTrue("There is a change in canvas chart",
@@ -197,12 +200,11 @@ public class TraditionalTests {
 					compareImage(screenshotLocationTemp, screenshotLocation2019));
 		}
 
-		
 		@Test
 		public void TableSortTest() {
 
 			// Navigate the browser to the "ACME" demo app.
-			driver.get("https://demo.applitools.com/hackathon.html");
+			driver.get("https://demo.applitools.com/hackathonV2.html");
 
 			// login to application
 			WebElement userNameWE = driver.findElement(By.id("username"));
@@ -265,12 +267,11 @@ public class TraditionalTests {
 			}
 		}
 
-		
 		@Test
-		public void loginUITest() {
+		public void loginUITest() throws Exception {
 
 			// Navigate the browser to the "ACME" demo app.
-			driver.get("https://demo.applitools.com/hackathon.html");
+			driver.get("https://demo.applitools.com/hackathonV2.html");
 
 			// verify the elements on the login form
 			String headerText = driver.findElement(By.xpath("//h4")).getText();
@@ -290,22 +291,42 @@ public class TraditionalTests {
 			String remembermeLabel = driver.findElement(By.xpath("//label[@class = 'form-check-label']")).getText();
 			Assert.assertTrue("Remember Me did not match", remembermeLabel.equals("Remember Me"));
 
-			WebElement userIcon = driver
-					.findElement(By.xpath("//div[@class = 'pre-icon os-icon os-icon-user-male-circle']"));
-			userIcon.isDisplayed();
+			try {
+				WebElement userIcon = driver
+						.findElement(By.xpath("//div[@class = 'pre-icon os-icon os-icon-user-male-circle']"));
+				userIcon.isDisplayed();
+			} catch (Exception e) {
+				throw new Exception("user icon is missing");
+			}
 
-			WebElement passwordIcon = driver
-					.findElement(By.xpath("//div[@class = 'pre-icon os-icon os-icon-fingerprint']"));
-			passwordIcon.isDisplayed();
+			try {
+				WebElement passwordIcon = driver
+						.findElement(By.xpath("//div[@class = 'pre-icon os-icon os-icon-fingerprint']"));
+				passwordIcon.isDisplayed();
+			} catch (Exception e) {
+				throw new Exception("password icon is missing");
+			}
 
-			WebElement twitterIcon = driver.findElement(By.xpath("//img[@src='img/social-icons/twitter.png']"));
-			twitterIcon.isDisplayed();
+			try {
+				WebElement twitterIcon = driver.findElement(By.xpath("//img[@src='img/social-icons/twitter.png']"));
+				twitterIcon.isDisplayed();
+			} catch (Exception e) {
+				throw new Exception("twitter icon is missing");
+			}
 
-			WebElement facebookIcon = driver.findElement(By.xpath("//img[@src='img/social-icons/facebook.png']"));
-			facebookIcon.isDisplayed();
+			try {
+				WebElement facebookIcon = driver.findElement(By.xpath("//img[@src='img/social-icons/facebook.png']"));
+				facebookIcon.isDisplayed();
+			} catch (Exception e) {
+				throw new Exception("facebook icon is missing");
+			}
 
-			WebElement linkedinIcon = driver.findElement(By.xpath("//img[@src='img/social-icons/linkedin.png']"));
-			linkedinIcon.isDisplayed();
+			try {
+				WebElement linkedinIcon = driver.findElement(By.xpath("//img[@src='img/social-icons/linkedin.png']"));
+				linkedinIcon.isDisplayed();
+			} catch (Exception e) {
+				throw new Exception("linkedin icon is missing");
+			}
 
 			WebElement logoIcon = driver.findElement(By.xpath("//img[@src='img/logo-big.png']"));
 			logoIcon.isDisplayed();
