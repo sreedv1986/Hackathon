@@ -58,12 +58,12 @@ public class VisualAITests {
 			this.password = password;
 			this.testName = testName;
 		}
-
+		
 		@Test
 		public void loginTest() throws Exception {
 			eyes.open(driver, "Hackathon App", testName);
 			// Navigate the browser to the "ACME" demo app.
-			driver.get("https://demo.applitools.com/hackathon.html");
+			driver.get("https://demo.applitools.com/hackathonV2.html");
 			System.out.println("UserName: " + userName + " , Password: " + password + " , TestName: " + testName);
 			boolean userNameExist = !StringUtils.isBlank(userName);
 			boolean passwordExist = !StringUtils.isBlank(password);
@@ -91,10 +91,7 @@ public class VisualAITests {
 			} else {
 				// Visual checkpoint
 				eyes.checkWindow("No UserName Password provided Window");
-			}
-			// eyes.check("loginTest", Target.window().ignoreDisplacements());
-			// End the test.
-			eyes.closeAsync();
+			}			
 		}
 
 		@Parameterized.Parameters
@@ -137,6 +134,8 @@ public class VisualAITests {
 
 		@After
 		public void afterEach() {
+			// End the test.
+			eyes.closeAsync();
 			// Close the browser.
 			driver.quit();
 			// If the test was aborted before eyes.close was called, ends the test as
@@ -161,21 +160,19 @@ public class VisualAITests {
 		@Test
 		public void DynamicContentTest() {
 			eyes.open(driver, "Hackathon App", "DynamicContentTest");
-			driver.get("https://demo.applitools.com/hackathonApp.html?showAd=true");
+			driver.get("https://demo.applitools.com/hackathonAppV2.html?showAd=true");
 			// Visual checkpoint - make sure nothing changes other than ads
 			eyes.checkWindow("DynamicContentTest Window");
 			List<WebElement> ad1 = driver.findElement(By.id("flashSale")).findElements(By.tagName("img"));
 			Assert.assertTrue("Dynamic ad1 is missing", ad1.size() == 1);
 			List<WebElement> ad2 = driver.findElement(By.id("flashSale2")).findElements(By.tagName("img"));
 			Assert.assertTrue("Dynamic ad2 is missing", ad2.size() == 1);
-			// End the test.
-			eyes.closeAsync();
 		}
 
 		@Test
 		public void CanvasChartTest() throws IOException, InterruptedException {
 			eyes.open(driver, "Hackathon App", "CanvasChartTest");
-			driver.get("https://demo.applitools.com/hackathon.html");
+			driver.get("https://demo.applitools.com/hackathonV2.html");
 
 			// login to application
 			WebElement userNameWE = driver.findElement(By.id("username"));
@@ -201,9 +198,6 @@ public class VisualAITests {
 			driver.findElement(By.id("addDataset")).click();
 			// click show data for next year
 			eyes.checkWindow("Canvas Chart 2019 Window");
-
-			// End the test.
-			eyes.closeAsync();
 		}
 
 		@Test
@@ -211,7 +205,7 @@ public class VisualAITests {
 
 			eyes.open(driver, "Hackathon App", "TableSortTest");
 			// Navigate the browser to the "ACME" demo app.
-			driver.get("https://demo.applitools.com/hackathon.html");
+			driver.get("https://demo.applitools.com/hackathonV2.html");
 
 			// login to application
 			WebElement userNameWE = driver.findElement(By.id("username"));
@@ -278,9 +272,6 @@ public class VisualAITests {
 				Assert.assertTrue("Amounts are not in Ascending order",
 						formattedSortedAmountsUI.get(i - 1).compareTo(formattedSortedAmountsUI.get(i)) < 0);
 			}
-
-			// End the test.
-			eyes.closeAsync();
 		}
 
 		@Test
@@ -289,17 +280,16 @@ public class VisualAITests {
 			eyes.open(driver, "Hackathon App", "loginUITest");
 
 			// Navigate the browser to the "ACME" demo app.
-			driver.get("https://demo.applitools.com/hackathon.html");
+			driver.get("https://demo.applitools.com/hackathonV2.html");
 
 			// Visual checkpoint #1 - Check the login page.
 			eyes.checkWindow("Login Window");
-
-			// End the test.
-			eyes.closeAsync();
 		}
 
 		@After
 		public void afterEach() {
+			// End the test.
+			eyes.closeAsync();
 			// Close the browser.
 			driver.quit();
 			// If the test was aborted before eyes.close was called, ends the test as
